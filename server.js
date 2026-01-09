@@ -3,7 +3,7 @@ const mqtt = require('mqtt');
 
 // GANTI LINK DI BAWAH dengan hasil copy dari MongoDB Atlas
 // Pastikan bagian <password> diganti dengan password user 'julianfrigel96_db_user'
-const mongoURI = "mongodb+srv://julianfrigel96_db_user:2wmazDwKVVRLPgaC@cluster0.gyfnunc.mongodb.net/database_uas?retryWrites=true&w=majority&appName=Cluster0";
+const mongoURI = "mongodb+srv://julianfrigel96_db_user:2wmazDwKVVRLPgaC@cluster0.gyfnunc.mongodb.net/?appName=Cluster0";
 
 mongoose.connect(mongoURI)
     .then(() => console.log("MongoDB Connec"))
