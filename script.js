@@ -3,7 +3,7 @@
  */
 const MQTT_CONFIG = {
     broker: "broker.hivemq.com",
-    port: 8000,
+    port: 88884,
     clientId: "js_dash_" + Math.random().toString(16).substr(2, 6),
     topics: {
         suhu: "pertanian/suhu",
@@ -212,8 +212,9 @@ function connectMQTT() {
             client.subscribe(MQTT_CONFIG.topics.suhu);
             client.subscribe(MQTT_CONFIG.topics.tanah);
         },
-        useSSL: false,
-        onFailure: () => {
+        useSSL: true,
+        onFailure: (error) => {
+            console.log("Gagal:, error")
             updateStatus('Gagal Terhubung', 'connecting');
             setTimeout(connectMQTT, 5000);
         }
