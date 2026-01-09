@@ -1,0 +1,359 @@
+/**
+ * SMART AGRICULTURE DASHBOARD - STYLESHEET
+ * Version: 2.0
+ */
+
+/* --- 1. CONFIGURATION & VARIABLES --- */
+:root {
+    /* Color Palette */
+    --bg-dark: #0f172a;
+    --bg-gradient: radial-gradient(circle at top left, #1e293b, #0f172a);
+    --glass-bg: rgba(255, 255, 255, 0.03);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    
+    /* Brand Colors */
+    --primary-blue: #38bdf8;
+    --primary-indigo: #818cf8;
+    --accent-rose: #fb7185;
+    
+    /* Typography Colors */
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    
+    /* Semantic Colors */
+    --success: #4ade80;
+    --warning: #fbbf24;
+    --danger: #ef4444;
+
+    /* Layout Spacing */
+    --section-gap: 40px;
+}
+
+/* --- 2. RESET & BASE STYLES --- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+
+body {
+    background: var(--bg-gradient);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    color: var(--text-main);
+    padding: 40px 0;
+    line-height: 1.5;
+}
+
+.container {
+    width: 95%;
+    max-width: 1000px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* --- 3. NAVIGATION --- */
+.dashboard-nav {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-bottom: 30px;
+}
+
+.nav-btn {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    color: var(--text-muted);
+    padding: 12px 24px;
+    border-radius: 16px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.nav-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--text-muted);
+}
+
+.nav-btn.active {
+    background: var(--primary-blue);
+    color: var(--bg-dark);
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 20px rgba(56, 189, 248, 0.3);
+}
+
+/* --- 4. PAGE MANAGEMENT --- */
+.page { 
+    display: none; 
+    animation: fadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1); 
+}
+
+.page.active { 
+    display: block; 
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- 5. HEADERS & INDICATORS --- */
+.dashboard-header { 
+    text-align: center; 
+    margin-bottom: var(--section-gap); 
+}
+
+.dashboard-header h1 {
+    font-size: clamp(1.8rem, 5vw, 2.8rem);
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, var(--primary-blue), var(--primary-indigo));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+#status {
+    margin-top: 15px; 
+    font-size: 0.85rem;
+    background: rgba(15, 23, 42, 0.6);
+    padding: 10px 24px; 
+    border-radius: 100px;
+    border: 1px solid var(--glass-border);
+    display: inline-flex; 
+    align-items: center;
+}
+
+#status span::before {
+    content: ""; 
+    display: inline-block;
+    width: 10px; 
+    height: 10px;
+    border-radius: 50%; 
+    margin-right: 12px;
+}
+
+.online::before { background: var(--success); box-shadow: 0 0 12px var(--success); }
+.connecting::before { background: var(--warning); animation: pulse 1s infinite; }
+
+/* --- 6. CORE CARD COMPONENT --- */
+.card, .chart-container, .history-container {
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
+    padding: 25px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+    transition: transform 0.3s ease, border-color 0.3s ease;
+}
+
+/* --- 7. SENSOR GRID (Top Section) --- */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 30px;
+    margin-bottom: var(--section-gap);
+}
+
+.card:hover { 
+    transform: translateY(-5px); 
+    border-color: rgba(255, 255, 255, 0.25); 
+}
+
+.icon {
+    width: 64px; height: 64px;
+    background: rgba(15, 23, 42, 0.5);
+    border-radius: 20px;
+    display: flex; 
+    justify-content: center; 
+    align-items: center;
+    font-size: 1.6rem; 
+    margin-right: 20px;
+    border: 1px solid var(--glass-border);
+}
+
+.card-temp .icon { color: var(--accent-rose); }
+.card-humidity .icon { color: var(--primary-blue); }
+
+/* --- 8. SMART ANALYSIS (Middle Section) --- */
+.recommendation-container { 
+    margin-bottom: var(--section-gap); 
+}
+
+.recommendation-card {
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.08), rgba(129, 140, 248, 0.08));
+    border: 1px solid rgba(56, 189, 248, 0.2);
+    display: flex; 
+    gap: 20px; 
+    align-items: flex-start !important;
+}
+
+.rec-icon { font-size: 2rem; color: var(--warning); padding-top: 4px; }
+.rec-content h3 { font-size: 1.1rem; color: var(--primary-blue); margin-bottom: 6px; }
+.rec-content p { font-size: 0.95rem; line-height: 1.6; color: var(--text-main); opacity: 0.9; }
+
+/* --- 9. REAL-TIME CHART (Middle Section) --- */
+.chart-container { 
+    height: 400px; 
+    margin-bottom: var(--section-gap);
+}
+
+.section-title-center {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.section-title-center h3 {
+    font-size: 1.25rem;
+    letter-spacing: 0.5px;
+}
+
+/* --- 10. ACTIVITY HISTORY (Bottom Section) --- */
+.history-header {
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.btn-clear {
+    background: rgba(251, 113, 133, 0.1);
+    border: 1px solid rgba(251, 113, 133, 0.2);
+    color: var(--accent-rose);
+    padding: 10px 20px; 
+    border-radius: 12px;
+    font-weight: 600; 
+    cursor: pointer; 
+    transition: 0.3s ease;
+}
+
+.btn-clear:hover { 
+    background: var(--accent-rose); 
+    color: white; 
+    box-shadow: 0 4px 15px rgba(251, 113, 133, 0.4);
+}
+
+.table-wrapper { 
+    border-radius: 18px; 
+    overflow: hidden; 
+    border: 1px solid var(--glass-border); 
+}
+
+table { width: 100%; border-collapse: collapse; }
+
+th { 
+    background: rgba(15, 23, 42, 0.8); 
+    color: var(--primary-blue); 
+    padding: 18px; 
+    text-align: left; 
+    font-size: 0.75rem; 
+    text-transform: uppercase; 
+    letter-spacing: 1.5px; 
+}
+
+td { 
+    padding: 18px; 
+    font-size: 0.9rem; 
+    border-bottom: 1px solid var(--glass-border); 
+}
+
+/* --- 11. SETTINGS PAGE STYLES --- */
+.settings-grid { 
+    display: grid; 
+    grid-template-columns: repeat(2, 1fr); 
+    gap: 25px; 
+}
+
+.settings-card { 
+    flex-direction: column !important; 
+    align-items: flex-start !important; 
+}
+
+.input-group { 
+    width: 100%; 
+    margin-top: 20px; 
+}
+
+.input-group label { 
+    display: block; 
+    font-size: 0.85rem; 
+    color: var(--text-muted); 
+    margin-bottom: 10px; 
+}
+
+.input-group input {
+    width: 100%; 
+    padding: 14px; 
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--glass-border); 
+    border-radius: 12px;
+    color: white; 
+    outline: none; 
+    transition: 0.3s;
+}
+
+.input-group input:focus { 
+    border-color: var(--primary-blue); 
+    box-shadow: 0 0 15px rgba(56, 189, 248, 0.15);
+}
+
+.btn-save {
+    width: 100%; 
+    padding: 18px; 
+    background: var(--success);
+    color: var(--bg-dark); 
+    border: none; 
+    border-radius: 16px;
+    font-weight: 800; 
+    font-size: 1rem;
+    cursor: pointer; 
+    transition: 0.3s; 
+    margin-top: 15px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.btn-save:hover {
+    filter: brightness(1.1);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(74, 222, 128, 0.2);
+}
+
+/* --- 12. UTILITIES & RESPONSIVE --- */
+@keyframes pulse { 50% { opacity: 0.5; } }
+.updating { animation: pulse 0.4s ease-in-out; }
+
+@media (max-width: 768px) {
+    body { padding: 20px 0; }
+    
+    .dashboard-grid, .settings-grid { 
+        grid-template-columns: 1fr; 
+    }
+    
+    .dashboard-nav { 
+        flex-direction: column; 
+    }
+    
+    .nav-btn { 
+        width: 100%; 
+        justify-content: center; 
+    }
+    
+    .recommendation-card { 
+        flex-direction: column; 
+        align-items: center !important; 
+        text-align: center; 
+    }
+
+    .history-header {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+}
