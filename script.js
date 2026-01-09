@@ -3,7 +3,7 @@
  */
 const MQTT_CONFIG = {
     broker: "broker.hivemq.com",
-    port: 88884,
+    port: 8884,
     clientId: "js_dash_" + Math.random().toString(16).substr(2, 6),
     topics: {
         suhu: "pertanian/suhu",
