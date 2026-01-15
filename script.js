@@ -98,21 +98,19 @@ function refreshDashboardUI() {
 }
 
 /* 4. MQTT LOGIC */
-const client = new Paho.MQTT.Client(MQTT_CONFIG.broker, MQTT_CONFIG.port, MQTT_CONFIG.clientId);
-
-client.onMessageArrived = message => {
+cclient.onMessageArrived = message => {
     const topicParts = message.destinationName.split("/");
     const payload = message.payloadString.trim(); 
     const value = parseFloat(payload);
 
-    // Validasi: Pastikan topik memiliki format pertanian/wilayah/sensor
+    // 1. Validasi Awal
     if (topicParts.length < 3 || isNaN(value)) return;
 
-    const wilayah = topicParts[1];           // Contoh: wilayah_2
-    const type = topicParts[2].toLowerCase(); // Contoh: kelembapan_tanah atau suhu
+    const wilayah = topicParts[1]; 
+    const type = topicParts[2].toLowerCase(); 
     const time = new Date().toLocaleTimeString("id-ID");
 
-    // 1. Simpan ke memori global (Sensor State) agar data tidak hilang saat pindah menu
+    // 2. Simpan ke State (Memori Global)
     if (sensorState[wilayah]) {
         if (type.includes("suhu")) {
             sensorState[wilayah].temp = value;
@@ -122,32 +120,22 @@ client.onMessageArrived = message => {
         }
     }
 
-    // 2. Update Tampilan Dashboard (Hanya jika wilayah sesuai dengan yang dipilih di Dropdown)
+    // 3. Update UI (Hanya jika wilayah yang dibuka sesuai)
     if (wilayah === currentWilayah) {
-        
-        // Update Angka Suhu
         if (type.includes("suhu")) {
             const tempValEl = document.getElementById("temp-val");
-            if (tempValEl) {
-                tempValEl.innerHTML = `${value.toFixed(1)}<span class="unit">°C</span>`;
-            }
-            updateChart(0, value, time); // Masukkan ke grafik dataset 0
+            if (tempValEl) tempValEl.innerHTML = `${value.toFixed(1)}<span class="unit">°C</span>`;
+            updateChart(0, value, time);
         } 
-        
-        // Update Angka Kelembapan Tanah
         else if (type.includes("kelembapan")) {
             const humValEl = document.getElementById("hum-val");
-            if (humValEl) {
-                humValEl.innerHTML = `${Math.round(value)}<span class="unit">%</span>`;
-            }
-            updateChart(1, value, time); // Masukkan ke grafik dataset 1
+            if (humValEl) humValEl.innerHTML = `${Math.round(value)}<span class="unit">%</span>`;
+            updateChart(1, value, time);
         }
-
-        // Update Pesan Rekomendasi berdasarkan data terbaru
         updateRecommendation(sensorState[currentWilayah].temp, sensorState[currentWilayah].hum);
     }
     
-    // 3. Masukkan data ke Tabel Riwayat (Log)
+    // 4. Catat ke Tabel Riwayat
     addToLog(wilayah, type, value, time);
 };
 
