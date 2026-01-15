@@ -7,12 +7,13 @@
 /* 1. KONFIGURASI GLOBAL */
 const MQTT_CONFIG = {
     broker: "broker.hivemq.com",
-    port: 8884, 
+    port: 8884, // Menggunakan port 8884 untuk Secure WebSocket (WSS)
     clientId: `dash_${Math.random().toString(16).slice(2, 8)}`,
     rootTopic: "pertanian"
 };
 
 let currentWilayah = "wilayah_1";
+let settings = { tempMax: 35, humMin: 30 };
 
 const wilayahNames = {
     wilayah_1: "Lahan Rigel - Tegalgondo",
@@ -21,9 +22,6 @@ const wilayahNames = {
     wilayah_4: "Lahan Dzaky - Sukun"
 };
 
-let settings = { tempMax: 35, humMin: 30 };
-
-// Menyimpan data terakhir dari setiap wilayah agar tidak hilang saat pindah halaman
 const sensorState = {
     wilayah_1: { temp: 0, hum: 0 },
     wilayah_2: { temp: 0, hum: 0 },
@@ -31,96 +29,66 @@ const sensorState = {
     wilayah_4: { temp: 0, hum: 0 }
 };
 
-/* 2. NAVIGASI HALAMAN */
-function showPage(pageId) {
-    document.querySelectorAll(".page").forEach(page => {
-        page.style.display = "none";
-        page.classList.remove("active");
-    });
+/* 2. MQTT LOGIC (KONEKSI & HANDLER) */
+const client = new Paho.MQTT.Client(MQTT_CONFIG.broker, MQTT_CONFIG.port, MQTT_CONFIG.clientId);
 
-    const target = document.getElementById(`page-${pageId}`);
-    if (target) {
-        target.style.display = "block";
-        target.classList.add("active");
-    }
+function connectMQTT() {
+    const statusEl = document.getElementById("status");
+    
+    const options = {
+        useSSL: true, // WAJIB TRUE agar bisa berjalan di HTTPS (Vercel/GitHub)
+        timeout: 3,
+        keepAliveInterval: 30,
+        onSuccess: () => {
+            console.log("MQTT Connected Successfully!");
+            if (statusEl) {
+                statusEl.innerHTML = `<span class="dot" style="background:#2ecc71"></span> Status: <span style="color:#2ecc71">Online</span>`;
+            }
+            // Subscribe ke semua wilayah di bawah rootTopic
+            client.subscribe(`${MQTT_CONFIG.rootTopic}/#`);
+        },
+        onFailure: (error) => {
+            console.log("MQTT Connection Failed: " + error.errorMessage);
+            if (statusEl) {
+                statusEl.innerHTML = `<span class="dot" style="background:#ff4757"></span> Status: <span style="color:#ff4757">Offline (Reconnect...)</span>`;
+            }
+            setTimeout(connectMQTT, 5000); // Coba hubungkan kembali setiap 5 detik
+        }
+    };
 
-    document.querySelectorAll(".nav-btn").forEach(btn => {
-        btn.classList.remove("active");
-    });
-    const activeBtn = document.getElementById(`btn-${pageId}`);
-    if (activeBtn) activeBtn.classList.add("active");
-
-    if (pageId === "main") {
-        refreshDashboardUI();
-    }
+    client.connect(options);
 }
 
-/* 3. LOKASI & SINKRONISASI UI */
-function changeLocation() {
-    const selector = document.getElementById("select-location");
-    if (!selector) return;
-
-    currentWilayah = selector.value;
-    const fullName = wilayahNames[currentWilayah] || "Lahan";
-    const locationName = fullName.includes(" - ") ? fullName.split(" - ")[1] : fullName;
-
-    // Update teks header
-    document.querySelectorAll(".current-loc-text").forEach(el => {
-        el.innerText = locationName;
-    });
-
-    // --- PEMBERSIH RIWAYAT (Agar tidak ada bekas wilayah lain) ---
-    const body = document.getElementById("log-body");
-    if (body) {
-        body.innerHTML = `
-            <tr id="empty-row">
-                <td colspan="5" style="text-align: center;">Menunggu data dari ${locationName}...</td>
-            </tr>
-        `;
+// Handler saat koneksi terputus tiba-tiba
+client.onConnectionLost = (responseObject) => {
+    const statusEl = document.getElementById("status");
+    if (responseObject.errorCode !== 0) {
+        console.log("Connection Lost: " + responseObject.errorMessage);
+        if (statusEl) statusEl.innerHTML = `<span class="dot" style="background:#ff4757"></span> Status: <span style="color:#ff4757">Terputus</span>`;
+        connectMQTT();
     }
+};
 
-    resetChart(); 
-    refreshDashboardUI();
-}
-
-function refreshDashboardUI() {
-    const data = sensorState[currentWilayah];
-    const tempEl = document.getElementById("temp-val");
-    const humEl = document.getElementById("hum-val");
-
-    if (tempEl) {
-        tempEl.innerHTML = data.temp > 0 ? `${data.temp.toFixed(1)}<span class="unit">°C</span>` : `--<span class="unit">°C</span>`;
-    }
-    if (humEl) {
-        humEl.innerHTML = data.hum > 0 ? `${Math.round(data.hum)}<span class="unit">%</span>` : `--<span class="unit">%</span>`;
-    }
-    updateRecommendation(data.temp, data.hum);
-}
-
-/* 4. MQTT LOGIC */
-cclient.onMessageArrived = message => {
+// Handler saat pesan data masuk
+client.onMessageArrived = message => {
     const topicParts = message.destinationName.split("/");
     const payload = message.payloadString.trim(); 
     const value = parseFloat(payload);
 
-    // 1. Validasi Awal
+    // Validasi format: pertanian/wilayah/sensor
     if (topicParts.length < 3 || isNaN(value)) return;
 
     const wilayah = topicParts[1]; 
     const type = topicParts[2].toLowerCase(); 
     const time = new Date().toLocaleTimeString("id-ID");
 
-    // 2. Simpan ke State (Memori Global)
+    // 1. Simpan ke Memori Global (State)
     if (sensorState[wilayah]) {
-        if (type.includes("suhu")) {
-            sensorState[wilayah].temp = value;
-        } 
-        else if (type.includes("kelembapan")) {
-            sensorState[wilayah].hum = value;
-        }
+        if (type.includes("suhu")) sensorState[wilayah].temp = value;
+        if (type.includes("kelembapan")) sensorState[wilayah].hum = value;
     }
 
-    // 3. Update UI (Hanya jika wilayah yang dibuka sesuai)
+    // 2. Update Dashboard UI (Hanya jika wilayah sesuai dengan yang dipilih)
     if (wilayah === currentWilayah) {
         if (type.includes("suhu")) {
             const tempValEl = document.getElementById("temp-val");
@@ -135,26 +103,64 @@ cclient.onMessageArrived = message => {
         updateRecommendation(sensorState[currentWilayah].temp, sensorState[currentWilayah].hum);
     }
     
-    // 4. Catat ke Tabel Riwayat
+    // 3. Tambahkan ke Tabel Riwayat
     addToLog(wilayah, type, value, time);
 };
 
-/* 5. SETTINGS */
-function applySettings() {
-    const tMax = document.getElementById("set-temp-max");
-    const hMin = document.getElementById("set-hum-min");
-    
-    if (tMax && hMin) {
-        settings.tempMax = parseFloat(tMax.value);
-        settings.humMin = parseFloat(hMin.value);
-        alert(`Pengaturan disimpan!`);
-        showPage("main");
+/* 3. NAVIGASI HALAMAN */
+function showPage(pageId) {
+    document.querySelectorAll(".page").forEach(page => {
+        page.style.display = "none";
+        page.classList.remove("active");
+    });
+
+    const target = document.getElementById(`page-${pageId}`);
+    if (target) {
+        target.style.display = "block";
+        target.classList.add("active");
     }
+
+    document.querySelectorAll(".nav-btn").forEach(btn => btn.classList.remove("active"));
+    const activeBtn = document.getElementById(`btn-${pageId}`);
+    if (activeBtn) activeBtn.classList.add("active");
+
+    if (pageId === "main") refreshDashboardUI();
 }
 
-/* 6. CHART LOGIC */
-let iotChart;
+/* 4. LOKASI & RIWAYAT LOGIC */
+function changeLocation() {
+    const selector = document.getElementById("select-location");
+    if (!selector) return;
 
+    currentWilayah = selector.value;
+    const fullName = wilayahNames[currentWilayah] || "Lahan";
+    const locationName = fullName.includes(" - ") ? fullName.split(" - ")[1] : fullName;
+
+    document.querySelectorAll(".current-loc-text").forEach(el => el.innerText = locationName);
+
+    // Bersihkan tabel saat pindah lokasi
+    const body = document.getElementById("log-body");
+    if (body) {
+        body.innerHTML = `<tr id="empty-row"><td colspan="5" style="text-align: center;">Menunggu data dari ${locationName}...</td></tr>`;
+    }
+
+    resetChart(); 
+    refreshDashboardUI();
+}
+
+function refreshDashboardUI() {
+    const data = sensorState[currentWilayah];
+    const tempEl = document.getElementById("temp-val");
+    const humEl = document.getElementById("hum-val");
+
+    if (tempEl) tempEl.innerHTML = data.temp > 0 ? `${data.temp.toFixed(1)}<span class="unit">°C</span>` : `--<span class="unit">°C</span>`;
+    if (humEl) humEl.innerHTML = data.hum > 0 ? `${Math.round(data.hum)}<span class="unit">%</span>` : `--<span class="unit">%</span>`;
+    
+    updateRecommendation(data.temp, data.hum);
+}
+
+/* 5. GRAFIK (CHART.JS) */
+let iotChart;
 function initChart() {
     const canvas = document.getElementById("iotChart");
     if (!canvas) return;
@@ -194,9 +200,9 @@ function resetChart() {
     iotChart.update();
 }
 
-/* 7. LOG & REKOMENDASI */
+/* 6. LOG & REKOMENDASI */
 function addToLog(wilayah, type, value, time) {
-    if (wilayah !== currentWilayah) return; // KUNCI AGAR TIDAK CAMPUR
+    if (wilayah !== currentWilayah) return; 
     
     const body = document.getElementById("log-body");
     if (!body) return;
@@ -207,14 +213,14 @@ function addToLog(wilayah, type, value, time) {
     const name = wilayahNames[wilayah]?.split(" - ")[1] || wilayah;
     let status = "Normal", cls = "success";
 
-    if (type === "suhu" && value > settings.tempMax) { status = "Panas"; cls = "danger"; }
-    if (type === "kelembapan" && value < settings.humMin) { status = "Kering"; cls = "warning"; }
+    if (type.includes("suhu") && value > settings.tempMax) { status = "Panas"; cls = "danger"; }
+    else if (type.includes("kelembapan") && value < settings.humMin) { status = "Kering"; cls = "warning"; }
 
     const row = document.createElement("tr");
     row.innerHTML = `
         <td>${time}</td>
         <td>${name}</td>
-        <td>${type === "suhu" ? "Suhu Udara" : "Kelembapan Tanah"}</td>
+        <td>${type.includes("suhu") ? "Suhu Udara" : "Kelembapan Tanah"}</td>
         <td>${value.toFixed(1)}</td>
         <td><span class="status-badge ${cls}">${status}</span></td>
     `;
@@ -228,31 +234,40 @@ function updateRecommendation(temp, hum) {
 
     if (temp === 0 && hum === 0) { 
         el.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Menunggu data sensor...`; 
-    } 
-    else if (temp > settings.tempMax) { 
+    } else if (temp > settings.tempMax) { 
         el.innerHTML = `<div style="color: #fb7185;"><i class="fas fa-exclamation-triangle"></i> <b>Suhu Panas!</b> Nyalakan Sprinkler.</div>`; 
-    } 
-    else if (hum < settings.humMin) { 
+    } else if (hum < settings.humMin) { 
         el.innerHTML = `<div style="color: #fbbf24;"><i class="fas fa-tint-slash"></i> <b>Tanah Kering!</b> Nyalakan Pompa.</div>`; 
-    } 
-    else { 
+    } else { 
         el.innerHTML = `<div style="color: #2ecc71;"><i class="fas fa-check-circle"></i> <b>Kondisi Aman</b> Tanaman optimal.</div>`; 
     }
 }
 
-function clearHistory() {
-    const body = document.getElementById("log-body");
-    if (body && confirm("Hapus semua riwayat pada tampilan ini?")) {
-        body.innerHTML = `<tr id="empty-row"><td colspan="5" style="text-align: center;">Menunggu data...</td></tr>`;
+/* 7. PENGATURAN & INISIALISASI */
+function applySettings() {
+    const tMax = document.getElementById("set-temp-max");
+    const hMin = document.getElementById("set-hum-min");
+    if (tMax && hMin) {
+        settings.tempMax = parseFloat(tMax.value);
+        settings.humMin = parseFloat(hMin.value);
+        alert(`Pengaturan disimpan!`);
+        showPage("main");
     }
 }
 
-/* 8. INIT */
 window.addEventListener("load", () => {
     initChart();
-    connectMQTT();
-    changeLocation(); // Menjalankan pembersihan awal
+    connectMQTT(); // Menjalankan koneksi pertama kali
+    changeLocation(); 
     showPage("main");
+    
     const clearBtn = document.getElementById("clear-history");
-    if (clearBtn) clearBtn.addEventListener("click", clearHistory);
+    if (clearBtn) {
+        clearBtn.addEventListener("click", () => {
+            const body = document.getElementById("log-body");
+            if (body && confirm("Hapus semua riwayat pada tampilan ini?")) {
+                body.innerHTML = `<tr id="empty-row"><td colspan="5" style="text-align: center;">Menunggu data...</td></tr>`;
+            }
+        });
+    }
 });
