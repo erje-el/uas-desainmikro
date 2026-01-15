@@ -105,33 +105,46 @@ client.onMessageArrived = message => {
     const payload = message.payloadString.trim(); 
     const value = parseFloat(payload);
 
+    // Validasi: Pastikan topik memiliki minimal 3 bagian (pertanian/wilayah/sensor)
     if (topicParts.length < 3 || isNaN(value)) return;
 
-    const wilayah = topicParts[1];
-    const type = topicParts[2].toLowerCase(); 
+    const wilayah = topicParts[1]; // contoh: wilayah_2
+    const type = topicParts[2].toLowerCase(); // contoh: kelembapan_tanah
     const time = new Date().toLocaleTimeString("id-ID");
 
-    // Simpan ke memori global berdasarkan wilayah pengirim
+    // 1. Simpan ke memori global (Sensor State)
     if (sensorState[wilayah]) {
-        if (type === "suhu") sensorState[wilayah].temp = value;
-        if (type === "kelembapan") sensorState[wilayah].hum = value;
+        if (type.includes("suhu")) {
+            sensorState[wilayah].temp = value;
+        } 
+        // Menggunakan includes agar 'kelembapan_tanah' atau 'kelembapan_udara' bisa masuk
+        else if (type.includes("kelembapan")) {
+            sensorState[wilayah].hum = value;
+        }
     }
 
-    // Hanya update UI jika data yang datang sesuai dengan wilayah yang sedang dibuka
+    // 2. Update UI secara Real-time (Hanya jika wilayah yang dipilih sedang dibuka)
     if (wilayah === currentWilayah) {
-        if (type === "suhu") {
+        
+        // --- Bagian Update Suhu ---
+        if (type.includes("suhu")) {
             const tempValEl = document.getElementById("temp-val");
             if (tempValEl) tempValEl.innerHTML = `${value.toFixed(1)}<span class="unit">°C</span>`;
-            updateChart(0, value, time);
-        } else if (type === "kelembapan") {
+            updateChart(0, value, time); // Dataset 0 untuk Suhu
+        } 
+        
+        // --- Bagian Update Kelembapan (Tanah/Udara) ---
+        else if (type.includes("kelembapan")) {
             const humValEl = document.getElementById("hum-val");
             if (humValEl) humValEl.innerHTML = `${Math.round(value)}<span class="unit">%</span>`;
-            updateChart(1, value, time);
+            updateChart(1, value, time); // Dataset 1 untuk Kelembapan
         }
+
+        // Update teks rekomendasi berdasarkan data terbaru di wilayah tersebut
         updateRecommendation(sensorState[currentWilayah].temp, sensorState[currentWilayah].hum);
     }
     
-    // Kirim ke log (fungsi ini sudah ada filter wilayah di dalamnya)
+    // 3. Kirim ke tabel riwayat (Log)
     addToLog(wilayah, type, value, time);
 };
 
