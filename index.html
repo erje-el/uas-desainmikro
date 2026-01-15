@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Smart Agriculture Dashboard - Premium</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <link rel="stylesheet" href="style.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="bg-glow-1"></div>
+    <div class="bg-glow-2"></div>
+
+    <main class="container">
+        <nav class="dashboard-nav">
+            <button class="nav-btn active" onclick="showPage('main')" id="btn-main">
+                <i class="fas fa-th-large"></i> <span>Dashboard</span>
+            </button>
+            <button class="nav-btn" onclick="showPage('settings')" id="btn-settings">
+                <i class="fas fa-cog"></i> <span>Pengaturan</span>
+            </button>
+        </nav>
+
+        <div id="page-main" class="page active">
+            <header class="dashboard-header">
+                <h1><i class="fas fa-seedling"></i> Monitoring Lahan</h1>
+                
+                <div id="status" class="status-badge">
+                    <span class="dot"></span> Status: <span class="connecting">Menghubungkan...</span>
+                </div>
+
+                <div class="location-selector">
+                    <label for="select-location"><i class="fas fa-map-marker-alt"></i> Pilih Wilayah:</label>
+                    <select id="select-location" onchange="changeLocation()">
+                        <option value="wilayah_1">Lahan Rigel - Tegalgondo</option>
+                        <option value="wilayah_2">Lahan Firman - gondang</option>
+                        <option value="wilayah_3">Lahan Fikri - Tirtoutomo</option>
+                        <option value="wilayah_4">Lahan Dzaky - Sukun</option>
+                    </select>
+                </div>
+            </header>
+
+            <section class="dashboard-grid">
+                <article class="card">
+                    <div class="card-icon-wrapper">
+                        <i class="fas fa-thermometer-half"></i>
+                    </div>
+                    <div class="info">
+                        <h3 id="temp-label">Suhu Udara</h3>
+                        <h2 id="temp-val">--<span class="unit">°C</span></h2>
+                        <p class="loc-sub"><i class="fas fa-location-arrow"></i> <span class="current-loc-text">Lokasi</span></p>
+                    </div>
+                </article>
+
+                <article class="card">
+                    <div class="card-icon-wrapper">
+                        <i class="fas fa-tint"></i>
+                    </div>
+                    <div class="info">
+                        <h3 id="hum-label">Kelembapan Tanah</h3>
+                        <h2 id="hum-val">--<span class="unit">%</span></h2>
+                        <p class="loc-sub"><i class="fas fa-location-arrow"></i> <span class="current-loc-text">Lokasi</span></p>
+                    </div>
+                </article>
+            </section>
+
+            <section class="recommendation-container">
+                <article class="card">
+                    <h2><i class="fas fa-brain"></i> Analisis & Rekomendasi</h2>
+                    <p id="recommendation-text">Sistem sedang menunggu transmisi data sensor...</p>
+                </article>
+            </section>
+
+            <section class="chart-container card">
+                <h2>
+                    <i class="fas fa-chart-line"></i> 
+                    Grafik Real-time: <span class="current-loc-text">Lokasi</span>
+                </h2>
+                <div class="chart-wrapper">
+                    <canvas id="iotChart"></canvas>
+                </div>
+            </section>
+
+            <section class="history-container card">
+                <header style="display: flex; justify-content: space-between; align-items: center;">
+                    <h2><i class="fas fa-history"></i> Riwayat Aktivitas</h2>
+                    <button id="clear-history">
+                        <i class="fas fa-trash-alt"></i> Bersihkan Log
+                    </button>
+                </header>
+                
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Waktu</th>
+                                <th>Wilayah</th>
+                                <th>Sensor</th>
+                                <th>Nilai</th>
+                                <th>Kondisi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="log-body">
+                            <tr id="empty-row">
+                                <td colspan="5" style="text-align: center;">Menunggu data dari broker...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+
+        <div id="page-settings" class="page">
+            <header class="dashboard-header">
+                <h1><i class="fas fa-sliders-h"></i> Konfigurasi</h1>
+                <p>Sesuaikan ambang batas peringatan sistem</p>
+            </header>
+
+            <section class="settings-grid">
+                <article class="card">
+                    <h3><i class="fas fa-bell"></i> Ambang Batas (Threshold)</h3>
+                    <div class="input-group">
+                        <label for="set-temp-max">Batas Maksimum Suhu (°C)</label>
+                        <input type="number" id="set-temp-max" value="35">
+                    </div>
+                    <div class="input-group">
+                        <label for="set-hum-min">Batas Minimum Kelembapan (%)</label>
+                        <input type="number" id="set-hum-min" value="30">
+                    </div>
+                </article>
+
+                <article class="card">
+                    <h3><i class="fas fa-network-wired"></i> Konfigurasi MQTT</h3>
+                    <div class="input-group">
+                        <label for="set-topic-root">Root Topic</label>
+                        <input type="text" id="set-topic-root" value="pertanian">
+                    </div>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 10px;">
+                        Data akan diterima melalui: <b>root/wilayah/sensor</b>
+                    </p>
+                </article>
+            </section>
+
+            <div style="text-align: center; margin-top: 30px;">
+                <button class="btn-save" onclick="applySettings()">
+                    <i class="fas fa-save"></i> Simpan Pengaturan
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
