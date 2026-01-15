@@ -1,6 +1,4 @@
-/* ======================================================
-   1. ROOT VARIABLES – PREMIUM COLOR PALETTE
-====================================================== */
+/*  1. ROOT VARIABLES – PREMIUM COLOR PALETTE */
 :root {
     --bg-dark: #0f172a;
     --bg-card: rgba(30, 41, 59, 0.7);
@@ -21,9 +19,7 @@
     --card-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
 }
 
-/* ======================================================
-   2. GLOBAL RESET & BASE
-====================================================== */
+/*  2. GLOBAL RESET & BASE */
 *,
 *::before,
 *::after {
@@ -66,18 +62,14 @@ body::after {
     background: var(--primary-indigo);
 }
 
-/* ======================================================
-   3. MAIN CONTAINER
-====================================================== */
+/* 3. MAIN CONTAINER */
 .container {
     max-width: 1200px;
     margin: 0 auto;
     padding: 40px 20px;
 }
 
-/* ======================================================
-   4. HEADER & STATUS
-====================================================== */
+/* 4. HEADER & STATUS */
 .dashboard-header {
     display: flex;
     flex-direction: column;
@@ -133,9 +125,7 @@ body::after {
     100% { transform: scale(3); opacity: 0; }
 }
 
-/* ======================================================
-   5. NAVIGATION
-====================================================== */
+/*  5. NAVIGATION */
 .dashboard-nav {
     display: flex;
     justify-content: center;
@@ -162,9 +152,7 @@ body::after {
     box-shadow: 0 8px 20px rgba(56, 189, 248, 0.3);
 }
 
-/* ======================================================
-   6. LOCATION SELECTOR
-====================================================== */
+/* 6. LOCATION SELECTOR */
 .location-selector {
     margin: 0 auto 40px;
     padding: 15px 30px;
@@ -192,9 +180,7 @@ body::after {
     color: var(--primary-blue);
 }
 
-/* ======================================================
-   7. DASHBOARD GRID & CARDS
-====================================================== */
+/* 7. DASHBOARD GRID & CARDS */
 .dashboard-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -212,7 +198,6 @@ body::after {
     overflow: hidden;
     transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
     cursor: pointer;
-    /* JANGAN tambahkan margin: 30px di sini! */
 }
 
 /* EFEK HOVER: Hanya angkat kartu & ganti warna border */
@@ -233,7 +218,6 @@ body::after {
     overflow: hidden;
     transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
     cursor: pointer;
-    /* Pastikan TIDAK ADA margin di sini agar grid tidak berantakan */
 }
 
 /* Hover Kartu: Hanya angkat sedikit */
@@ -265,7 +249,6 @@ body::after {
     transform: scale(1.1) rotate(5deg);
 }
 
-/* ANTI-BERANTAK: Menghapus elemen garis yang merusak teks */
 .card::after, .card::before {
     content: none !important;
     display: none !important;
@@ -283,9 +266,7 @@ body::after {
     font-size: 1.1rem;
 }
 
-/* ======================================================
-   8. CHART (ANTI MEPET – WAJIB)
-====================================================== */
+/* 8. CHART (ANTI MEPET – WAJIB) */
 .chart-container {
     margin-top: 50px !important;    /* Memberi jarak jauh dari Analisis */
     margin-bottom: 50px !important; /* Memberi jarak ke Riwayat Aktivitas */
@@ -293,8 +274,6 @@ body::after {
 }
 
 .chart-wrapper {
-    /* Hapus margin-top/bottom di sini agar tidak double */
-    padding: 25px;
     height: 350px;
     background: var(--bg-card);
     border-radius: 24px;
@@ -308,9 +287,7 @@ body::after {
 }
 
 
-/* ======================================================
-    9. TABLE & LOGS (FIXED VERSION)
-====================================================== */
+/*  9. TABLE & LOGS (FIXED VERSION)*/
 
 .history-container {
     margin-top: 50px;
@@ -397,9 +374,7 @@ td {
 tbody tr:hover {
     background: rgba(255, 255, 255, 0.02);
 }
-/* ======================================================
-   10. SETTINGS
-====================================================== */
+/* 10. SETTINGS */
 .settings-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
@@ -441,9 +416,7 @@ tbody tr:hover {
     transition: 0.3s;
 }
 
-/* ======================================================
-   11. PAGE ANIMATION
-====================================================== */
+/* 11. PAGE ANIMATION */
 .page {
     display: none;
     width: 100%;
@@ -459,9 +432,7 @@ tbody tr:hover {
     to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ======================================================
-   12. RESPONSIVE & SCROLLBAR
-====================================================== */
+/* 12. RESPONSIVE & SCROLLBAR */
 @media (max-width: 768px) {
     .dashboard-grid {
         grid-template-columns: repeat(2, 1fr) !important;
@@ -478,12 +449,10 @@ tbody tr:hover {
         margin-top: 30px;
     }
 }
-/* ======================================================
-   13. CUSTOM SCROLLBAR
-====================================================== */
+/*  13. CUSTOM SCROLLBAR */
 ::-webkit-scrollbar {
     width: 6px;
-    height: 6px; /* Support untuk scrollbar horizontal */
+    height: 6px; 
 }
 
 ::-webkit-scrollbar-track {
@@ -491,10 +460,10 @@ tbody tr:hover {
 }
 
 ::-webkit-scrollbar-thumb {
-    background: rgba(56, 189, 248, 0.2); /* Warna disesuaikan dengan tema biru */
+    background: rgba(56, 189, 248, 0.2); 
     border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: var(--primary-blue); /* Warna lebih terang saat di-hover */
+    background: var(--primary-blue); 
 }
