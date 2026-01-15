@@ -105,67 +105,51 @@ client.onMessageArrived = message => {
     const payload = message.payloadString.trim(); 
     const value = parseFloat(payload);
 
-    // Validasi: Pastikan topik memiliki minimal 3 bagian (pertanian/wilayah/sensor)
+    // Validasi: Pastikan topik memiliki format pertanian/wilayah/sensor
     if (topicParts.length < 3 || isNaN(value)) return;
 
-    const wilayah = topicParts[1]; // contoh: wilayah_2
-    const type = topicParts[2].toLowerCase(); // contoh: kelembapan_tanah
+    const wilayah = topicParts[1];           // Contoh: wilayah_2
+    const type = topicParts[2].toLowerCase(); // Contoh: kelembapan_tanah atau suhu
     const time = new Date().toLocaleTimeString("id-ID");
 
-    // 1. Simpan ke memori global (Sensor State)
+    // 1. Simpan ke memori global (Sensor State) agar data tidak hilang saat pindah menu
     if (sensorState[wilayah]) {
         if (type.includes("suhu")) {
             sensorState[wilayah].temp = value;
         } 
-        // Menggunakan includes agar 'kelembapan_tanah' atau 'kelembapan_udara' bisa masuk
         else if (type.includes("kelembapan")) {
             sensorState[wilayah].hum = value;
         }
     }
 
-    // 2. Update UI secara Real-time (Hanya jika wilayah yang dipilih sedang dibuka)
+    // 2. Update Tampilan Dashboard (Hanya jika wilayah sesuai dengan yang dipilih di Dropdown)
     if (wilayah === currentWilayah) {
         
-        // --- Bagian Update Suhu ---
+        // Update Angka Suhu
         if (type.includes("suhu")) {
             const tempValEl = document.getElementById("temp-val");
-            if (tempValEl) tempValEl.innerHTML = `${value.toFixed(1)}<span class="unit">°C</span>`;
-            updateChart(0, value, time); // Dataset 0 untuk Suhu
+            if (tempValEl) {
+                tempValEl.innerHTML = `${value.toFixed(1)}<span class="unit">°C</span>`;
+            }
+            updateChart(0, value, time); // Masukkan ke grafik dataset 0
         } 
         
-        // --- Bagian Update Kelembapan (Tanah/Udara) ---
+        // Update Angka Kelembapan Tanah
         else if (type.includes("kelembapan")) {
             const humValEl = document.getElementById("hum-val");
-            if (humValEl) humValEl.innerHTML = `${Math.round(value)}<span class="unit">%</span>`;
-            updateChart(1, value, time); // Dataset 1 untuk Kelembapan
+            if (humValEl) {
+                humValEl.innerHTML = `${Math.round(value)}<span class="unit">%</span>`;
+            }
+            updateChart(1, value, time); // Masukkan ke grafik dataset 1
         }
 
-        // Update teks rekomendasi berdasarkan data terbaru di wilayah tersebut
+        // Update Pesan Rekomendasi berdasarkan data terbaru
         updateRecommendation(sensorState[currentWilayah].temp, sensorState[currentWilayah].hum);
     }
     
-    // 3. Kirim ke tabel riwayat (Log)
+    // 3. Masukkan data ke Tabel Riwayat (Log)
     addToLog(wilayah, type, value, time);
 };
-
-function connectMQTT() {
-    console.log("Connecting to MQTT...");
-    client.connect({
-        useSSL: true,
-        timeout: 3,
-        keepAliveInterval: 60,
-        onSuccess: () => {
-            console.log("MQTT Connected!");
-            const statusEl = document.getElementById("status");
-            if (statusEl) statusEl.innerHTML = `<span class="dot"></span> Status: <b style="color:#2ecc71">Online</b>`;
-            client.subscribe(`${MQTT_CONFIG.rootTopic}/#`);
-        },
-        onFailure: (error) => {
-            console.log("Failed:", error.errorMessage);
-            setTimeout(connectMQTT, 5000);
-        }
-    });
-}
 
 /* 5. SETTINGS */
 function applySettings() {
